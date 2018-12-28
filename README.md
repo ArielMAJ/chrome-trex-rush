@@ -1,4 +1,4 @@
-# T-Rex Rush 
+# Chrome Trex Gym Environement
 
 ![](https://github.com/shivamshekhar/Chrome-T-Rex-Rush/raw/master/screenshot.gif)
 
