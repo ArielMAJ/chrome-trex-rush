@@ -385,6 +385,16 @@ class DinoGame:
 
         self.counter = (self.counter + 1)
 
+    def get_state(self):
+        def get_coords(sprites, min_size):
+            cs = [coord for s in sprites for coord in [
+                s.rect.centerx, s.rect.centery]]
+            return cs + [0, self.screen.get_width()]*(min_size-len(cs)//2)
+        return get_coords(self.cacti, 2) + get_coords(self.pteras, 1) + [self.gamespeed]
+
+    def get_score(self):
+        return self.scb.score
+
     def close(self):
         pygame.quit()
         quit()
