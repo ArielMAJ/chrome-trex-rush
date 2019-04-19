@@ -1,13 +1,14 @@
 import setuptools
 
 setuptools.setup(
-    name="chrome_trex_gym",
+    name="chrome_trex",
     version="0.0.1",
-    author="Badr Youbi Idrissi",
-    author_email="badryoubiidrissi@gmail.com",
-    description="A gym environement for the chrome trex game",
-    url="https://github.com/BadrYoubiIdrissi/chrome-trex-gym.git",
-    packages=setuptools.find_packages(),
+    author="Fernando Kurike Matsumoto",
+    author_email="ferkmatsumoto@gmail.com",
+    description="A library with the chrome trex game",
+    url="https://github.com/fernandokm/chrome-trex-rush",
+    license="MIT",
+    packages=['dinogame'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
