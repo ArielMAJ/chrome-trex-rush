@@ -1,14 +1,13 @@
-__author__ = "Shivam Shekhar"
-
 import os
-import sys
-import pygame
 import random
 import pkgutil
 import io
 import contextlib
 
+__author__ = "Shivam Shekhar"
+
 with contextlib.redirect_stdout(None):
+    import pygame
     from pygame import *
 
 ACTION_FORWARD = 0
@@ -24,7 +23,8 @@ WIDTH, HEIGHT = 600, 150
 
 def load_image(name, sizex=-1, sizey=-1, colorkey=None):
     fullname = os.path.join('sprites', name)
-    image = pygame.image.load(io.BytesIO(pkgutil.get_data('chrome_trex', fullname)), fullname)
+    image = pygame.image.load(io.BytesIO(
+        pkgutil.get_data('chrome_trex', fullname)), fullname)
     image = image.convert()
     if colorkey is not None:
         if colorkey is -1:
@@ -39,7 +39,8 @@ def load_image(name, sizex=-1, sizey=-1, colorkey=None):
 
 def load_sprite_sheet(sheetname, nx, ny, scalex=-1, scaley=-1, colorkey=None):
     fullname = os.path.join('sprites', sheetname)
-    sheet = pygame.image.load(io.BytesIO(pkgutil.get_data('chrome_trex', fullname)), fullname)
+    sheet = pygame.image.load(io.BytesIO(
+        pkgutil.get_data('chrome_trex', fullname)), fullname)
     sheet = sheet.convert()
 
     sheet_rect = sheet.get_rect()
@@ -151,7 +152,7 @@ class Dino():
         self.rect = self.rect.move(self.movement)
         self.checkbounds()
 
-        if not self.is_dead and self.counter % 7 == 6 and self.is_blinking == False:
+        if not self.is_dead and self.counter % 7 == 6 and not self.is_blinking:
             self.score += 1
 
         self.counter = (self.counter + 1)
@@ -316,7 +317,7 @@ class DinoGame:
         return pygame.surfarray.array3d(self.screen)
 
     def step(self, action):
-        if pygame.display.get_surface() == None:
+        if pygame.display.get_surface() is None:
             print("Couldn't load display surface")
             self.game_over = True
         else:
@@ -368,7 +369,7 @@ class DinoGame:
         self.scb.update(self.player_dino.score)
         self.highsc.update(self.high_score)
 
-        if pygame.display.get_surface() != None:
+        if pygame.display.get_surface() is not None:
             self.screen.fill(BACKGROUND_COL)
             self.new_ground.draw()
             self.clouds.draw(self.screen)
@@ -395,14 +396,21 @@ class DinoGame:
         self.counter = (self.counter + 1)
 
     def get_state(self):
+        w = self.screen.get_width()
+        h = self.screen.get_height()
+
         def get_coords(sprites, min_size):
-            cs = [coord for s in sprites for coord in [
-                s.rect.centerx, s.rect.centery]]
-            return cs + [0, self.screen.get_width()]*(min_size-len(cs)//2)
-        return get_coords(self.cacti, 2) + get_coords(self.pteras, 1) + [self.gamespeed]
+            cs = [((s.rect.centerx-self.player_dino.rect.centerx)/w, s.rect.centery, s.rect.height/h)
+                  for s in sprites
+                  if s.rect.centerx > self.player_dino.rect.centerx]
+            return cs + [(1, 0, 0)]*(min_size-len(cs))
+        coords = get_coords(self.cacti, 2) + get_coords(self.pteras, 1)
+        return [c
+                for cs in sorted(coords, key=lambda x: x[0])
+                for c in cs] + [self.gamespeed/w]
 
     def get_score(self):
-        return self.scb.score
+        return self.player_dino.score
 
     def close(self):
         pygame.quit()
