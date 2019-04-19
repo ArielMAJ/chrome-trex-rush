@@ -8,7 +8,8 @@ setuptools.setup(
     description="A library with the chrome trex game",
     url="https://github.com/fernandokm/chrome-trex-rush",
     license="MIT",
-    packages=['dinogame'],
+    packages=['chrome_trex'],
+    package_data={'chrome_trex': ['sprites/*.png']},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

@@ -4,6 +4,8 @@ import os
 import sys
 import pygame
 import random
+import pkgutil
+import io
 from pygame import *
 
 ACTION_FORWARD = 0
@@ -19,7 +21,7 @@ WIDTH, HEIGHT = 600, 150
 
 def load_image(name, sizex=-1, sizey=-1, colorkey=None):
     fullname = os.path.join('sprites', name)
-    image = pygame.image.load(fullname)
+    image = pygame.image.load(io.BytesIO(pkgutil.get_data('chrome_trex', fullname)), fullname)
     image = image.convert()
     if colorkey is not None:
         if colorkey is -1:
@@ -34,7 +36,7 @@ def load_image(name, sizex=-1, sizey=-1, colorkey=None):
 
 def load_sprite_sheet(sheetname, nx, ny, scalex=-1, scaley=-1, colorkey=None):
     fullname = os.path.join('sprites', sheetname)
-    sheet = pygame.image.load(fullname)
+    sheet = pygame.image.load(io.BytesIO(pkgutil.get_data('chrome_trex', fullname)), fullname)
     sheet = sheet.convert()
 
     sheet_rect = sheet.get_rect()
@@ -320,7 +322,8 @@ class DinoGame:
             if action == ACTION_UP:
                 if self.player_dino.rect.bottom == int(0.98*HEIGHT):
                     self.player_dino.is_jumping = True
-                    self.player_dino.movement[1] = -1*self.player_dino.jump_speed
+                    self.player_dino.movement[1] = - \
+                        1*self.player_dino.jump_speed
             elif action == ACTION_DOWN:
                 if not (self.player_dino.is_jumping and self.player_dino.is_dead):
                     self.player_dino.is_ducking = True
