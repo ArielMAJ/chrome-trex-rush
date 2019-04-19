@@ -10,6 +10,7 @@ setuptools.setup(
     license="MIT",
     packages=['chrome_trex'],
     package_data={'chrome_trex': ['sprites/*.png']},
+    install_requires=['pygame'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

@@ -6,7 +6,10 @@ import pygame
 import random
 import pkgutil
 import io
-from pygame import *
+import contextlib
+
+with contextlib.redirect_stdout(None):
+    from pygame import *
 
 ACTION_FORWARD = 0
 ACTION_UP = 1
