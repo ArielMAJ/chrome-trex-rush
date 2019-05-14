@@ -317,6 +317,9 @@ class MultiDinoGame:
         self.HI_rect.top = HEIGHT*0.1
         self.HI_rect.left = WIDTH*0.73
 
+        # Update the screen
+        self.step(ACTION_FORWARD)
+
     def get_image(self):
         return pygame.surfarray.array3d(self.screen)
 
