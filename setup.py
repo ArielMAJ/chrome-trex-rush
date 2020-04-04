@@ -6,7 +6,7 @@ setuptools.setup(
     author="Fernando Kurike Matsumoto",
     author_email="ferkmatsumoto@gmail.com",
     description="A library with the chrome trex game",
-    url="https://github.com/fernandokm/chrome-trex-rush",
+    url="https://github.com/GrupoTuringCodes/chrome-trex-rush",
     license="MIT",
     packages=['chrome_trex'],
     package_data={'chrome_trex': ['sprites/*.png']},

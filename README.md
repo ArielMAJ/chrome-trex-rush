@@ -28,7 +28,7 @@ To run this game:
 * Install the `chrome_trex` package:
 
     ```bash
-    git clone https://github.com/fernandokm/chrome-trex-rush
+    git clone https://github.com/GrupoTuringCodes/chrome-trex-rush
     cd chrome-trex-rush
     pip install .
     ```
