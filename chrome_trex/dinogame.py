@@ -28,7 +28,7 @@ def load_image(name, sizex=-1, sizey=-1, colorkey=None):
         pkgutil.get_data('chrome_trex', fullname)), fullname)
     image = image.convert()
     if colorkey is not None:
-        if colorkey is -1:
+        if colorkey == -1:
             colorkey = image.get_at((0, 0))
         image.set_colorkey(colorkey, RLEACCEL)
 
@@ -59,7 +59,7 @@ def load_sprite_sheet(sheetname, nx, ny, scalex=-1, scaley=-1, colorkey=None):
             image.blit(sheet, (0, 0), rect)
 
             if colorkey is not None:
-                if colorkey is -1:
+                if colorkey == -1:
                     colorkey = image.get_at((0, 0))
                 image.set_colorkey(colorkey, RLEACCEL)
 
@@ -318,7 +318,7 @@ class MultiDinoGame:
         self.HI_rect.left = WIDTH*0.73
 
         # Update the screen
-        self.step(ACTION_FORWARD)
+        self.step([ACTION_FORWARD for _ in range(self.dino_count)])
 
     def get_image(self):
         return pygame.surfarray.array3d(self.screen)
