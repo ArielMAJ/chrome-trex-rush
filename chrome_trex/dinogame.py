@@ -412,20 +412,22 @@ class MultiDinoGame:
     def get_state(self):
         """
         There can be up to 02 Cacti and 01 Ptera at the screen at a time.
+        Each cacti/ptera sprite is represented as a tuple (X, Y, H), in which.
 
         This function returns a list of states with 11 values for each dino:
-        [DY, X_C1, Y_C1, H_C1, X_C2, Y_C2, H_C2, X_P1, Y_P1, H_P1, GS]
+        [[DY, X1, Y1, H1, X2, Y2, H2, X3, Y3, H3, GS]]
         
-        Each cacti/ptera sprite is represented as a tuple (X, Y, H), in which:
         
         X: is the distance of a Cactus or Ptero from the dinossaur in the X axis;
-        Y: is the position in screen for the Y axis; and
+        Y: is the position of a Cactus or Ptero in screen for the Y axis; and
         H: is the height of the sprite.
         
-        DY is the position of the dinossaur in the Y axis (the only diference
+        DY is the position of the dinossaur in the Y axis (the only difference
         between each dinossaur).
         
         GS is the Game Speed.
+
+        The nearest object is in X1, Y1, H1. The farthest is X3, Y3, H3.
         """
         def _get_state(dino_number):
             w = self.screen.get_width()
