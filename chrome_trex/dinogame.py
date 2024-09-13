@@ -408,20 +408,46 @@ class MultiDinoGame:
 
         self.counter = (self.counter + 1)
 
+    
     def get_state(self):
+        """
+        There can be up to 02 Cacti and 01 Ptera at the screen at a time.
+
+        This function returns a list of states with 11 values for each dino:
+        [DY, X_C1, Y_C1, H_C1, X_C2, Y_C2, H_C2, X_P1, Y_P1, H_P1, GS]
+        
+        Each cacti/ptera sprite is represented as a tuple (X, Y, H), in which:
+        
+        X: is the distance of a Cactus or Ptero from the dinossaur in the X axis;
+        Y: is the position in screen for the Y axis; and
+        H: is the height of the sprite.
+        
+        DY is the position of the dinossaur in the Y axis (the only diference
+        between each dinossaur).
+        
+        GS is the Game Speed.
+        """
         def _get_state(dino_number):
             w = self.screen.get_width()
             h = self.screen.get_height()
 
             def get_coords(sprites, min_size):
-                cs = [((s.rect.centerx-self.player_dinos[dino_number].rect.centerx)/w, s.rect.centery/h, s.rect.height/h)
-                    for s in sprites
-                    if s.rect.centerx > self.player_dinos[dino_number].rect.centerx]
-                return cs + [(1, 0, 0)]*(min_size-len(cs))
+                cs = []
+                for sprite in sprites:
+                    X_distance_from_dino = (sprite.rect.centerx-self.player_dinos[dino_number].rect.centerx)/w
+                    Y_position_in_screen = sprite.rect.centery/h
+                    Height = sprite.rect.height/h
+                    if sprite.rect.centerx > self.player_dinos[dino_number].rect.centerx:
+                        cs += [(X_distance_from_dino, Y_position_in_screen, Height)]
+                return cs + [(1, 0, 0)]*(min_size - len(cs))
+
             coords = get_coords(self.cacti, 2) + get_coords(self.pteras, 1)
-            return [c
-                    for cs in sorted(coords, key=lambda x: x[0])
-                    for c in cs] + [self.gamespeed/w]
+            ordered_coords = sorted(coords, key=lambda x: x[0])
+            state = [self.player_dinos[dino_number].rect.centery/h] + \
+                    [c for cs in ordered_coords for c in cs] + \
+                    [self.gamespeed/w]
+            return state
+
         return [_get_state(dino_number) for dino_number in range(self.dino_count)]
 
     def get_scores(self):
