@@ -412,7 +412,7 @@ class MultiDinoGame:
     def get_state(self):
         """
         There can be up to 02 Cacti and 01 Ptera at the screen at a time.
-        Each cacti/ptera sprite is represented as a tuple (X, Y, H), in which.
+        Each cacti/ptera sprite is represented as a tuple (X, Y, H).
 
         This function returns a list of states with 11 values for each dino:
         [[DY, X1, Y1, H1, X2, Y2, H2, X3, Y3, H3, GS]]
