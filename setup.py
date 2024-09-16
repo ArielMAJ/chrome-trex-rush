@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="chrome_trex",
-    version="0.0.1",
+    version="0.2.0",
     author="Fernando Kurike Matsumoto",
     author_email="ferkmatsumoto@gmail.com",
     description="A library with the chrome trex game",
