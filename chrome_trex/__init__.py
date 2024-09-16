@@ -1,1 +1,21 @@
-from .dinogame import *
+from chrome_trex.dinogame import (  # noqa: F401
+    ACTION_DOWN,
+    ACTION_FORWARD,
+    ACTION_UP,
+    BACKGROUND_COL,
+    BLACK,
+    HEIGHT,
+    WHITE,
+    WIDTH,
+    Cactus,
+    Cloud,
+    Dino,
+    DinoGame,
+    Ground,
+    MultiDinoGame,
+    Ptera,
+    Scoreboard,
+    extract_digits,
+    load_image,
+    load_sprite_sheet,
+)
