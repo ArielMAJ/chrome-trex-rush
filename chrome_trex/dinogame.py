@@ -28,7 +28,7 @@ def load_image(name, sizex=-1, sizey=-1, colorkey=None):
         pkgutil.get_data('chrome_trex', fullname)), fullname)
     image = image.convert()
     if colorkey is not None:
-        if colorkey is -1:
+        if colorkey == -1:
             colorkey = image.get_at((0, 0))
         image.set_colorkey(colorkey, RLEACCEL)
 
@@ -59,7 +59,7 @@ def load_sprite_sheet(sheetname, nx, ny, scalex=-1, scaley=-1, colorkey=None):
             image.blit(sheet, (0, 0), rect)
 
             if colorkey is not None:
-                if colorkey is -1:
+                if colorkey == -1:
                     colorkey = image.get_at((0, 0))
                 image.set_colorkey(colorkey, RLEACCEL)
 
@@ -318,7 +318,7 @@ class MultiDinoGame:
         self.HI_rect.left = WIDTH*0.73
 
         # Update the screen
-        self.step(ACTION_FORWARD)
+        self.step([ACTION_FORWARD for _ in range(self.dino_count)])
 
     def get_image(self):
         return pygame.surfarray.array3d(self.screen)
@@ -408,19 +408,49 @@ class MultiDinoGame:
 
         self.counter = (self.counter + 1)
 
+    
     def get_state(self):
-        w = self.screen.get_width()
-        h = self.screen.get_height()
+        """
+        There can be up to 02 Cacti and 01 Ptera at the screen at a time.
+        Each cacti/ptera sprite is represented as a tuple (X, Y, H).
 
-        def get_coords(sprites, min_size):
-            cs = [((s.rect.centerx-self.player_dinos[0].rect.centerx)/w, s.rect.centery/h, s.rect.height/h)
-                  for s in sprites
-                  if s.rect.centerx > self.player_dinos[0].rect.centerx]
-            return cs + [(1, 0, 0)]*(min_size-len(cs))
-        coords = get_coords(self.cacti, 2) + get_coords(self.pteras, 1)
-        return [c
-                for cs in sorted(coords, key=lambda x: x[0])
-                for c in cs] + [self.gamespeed/w]
+        This function returns a list of states with 11 values for each dino:
+        [[DY, X1, Y1, H1, X2, Y2, H2, X3, Y3, H3, GS]]
+        
+        
+        X: is the distance of a Cactus or Ptero from the dinossaur in the X axis;
+        Y: is the position of a Cactus or Ptero in screen for the Y axis; and
+        H: is the height of the sprite.
+        
+        DY is the position of the dinossaur in the Y axis (the only difference
+        between each dinossaur).
+        
+        GS is the Game Speed.
+
+        The nearest object is in X1, Y1, H1. The farthest is X3, Y3, H3.
+        """
+        def _get_state(dino_number):
+            w = self.screen.get_width()
+            h = self.screen.get_height()
+
+            def get_coords(sprites, min_size):
+                cs = []
+                for sprite in sprites:
+                    X_distance_from_dino = (sprite.rect.centerx-self.player_dinos[dino_number].rect.centerx)/w
+                    Y_position_in_screen = sprite.rect.centery/h
+                    Height = sprite.rect.height/h
+                    if sprite.rect.centerx > self.player_dinos[dino_number].rect.centerx:
+                        cs += [(X_distance_from_dino, Y_position_in_screen, Height)]
+                return cs + [(1, 0, 0)]*(min_size - len(cs))
+
+            coords = get_coords(self.cacti, 2) + get_coords(self.pteras, 1)
+            ordered_coords = sorted(coords, key=lambda x: x[0])
+            state = [self.player_dinos[dino_number].rect.centery/h] + \
+                    [c for cs in ordered_coords for c in cs] + \
+                    [self.gamespeed/w]
+            return state
+
+        return [_get_state(dino_number) for dino_number in range(self.dino_count)]
 
     def get_scores(self):
         return [player.score for player in self.player_dinos]
@@ -438,3 +468,6 @@ class DinoGame(MultiDinoGame):
 
     def get_score(self):
         return self.get_scores()[0]
+
+    def get_state(self):
+        return super().get_state()[0]
