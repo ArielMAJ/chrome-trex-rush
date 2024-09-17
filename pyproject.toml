@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "chrome-trex-rush"
+name = "chrome-trex"
 version = "0.3.0"
 description = ""
 authors = []
