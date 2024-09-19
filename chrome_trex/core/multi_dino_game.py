@@ -21,19 +21,23 @@ from chrome_trex.helpers import load_sprite_sheet
 
 
 class MultiDinoGame:
-    def __init__(self, dino_count, fps=60):
+    def __init__(self, dino_count, fps=60, max_game_speed=12):
         self.high_score = 0
         self.fps = fps
+        self.obstacles = []
         self.dino_count = dino_count
         pygame.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         self.clock = pygame.time.Clock()
         pygame.display.set_caption("T-Rex Rush")
+        self.font = pygame.font.Font(None, 24)
+        self.max_game_speed = max_game_speed
         self.reset()
 
     def reset(self):
         self.gamespeed = 4
         self.game_over = False
+        self.obstacles = []
         self.new_ground = Ground(-1 * self.gamespeed)
         self.scb = Scoreboard()
         self.highsc = Scoreboard(WIDTH * 0.78)
@@ -78,8 +82,7 @@ class MultiDinoGame:
         for player, action in zip(self.player_dinos, actions):
             if player.is_dead:
                 continue
-            if action == ACTION_FORWARD:
-                player.is_ducking = False
+            player.is_ducking = False
             if action == ACTION_UP:
                 if player.rect.bottom == int(0.98 * HEIGHT):
                     player.is_jumping = True
@@ -96,31 +99,36 @@ class MultiDinoGame:
                     self.alive_players.remove(player)
                     self.last_dead_player = player
 
-        if len(self.cacti) < 2:
-            if len(self.cacti) == 0:
+        obstaculos = len(self.cacti) + len(self.pteras)
+
+        MIN_DISTANCE = 200 * self.gamespeed
+        if obstaculos < 3:
+            if obstaculos == 0:
                 self.last_obstacle.empty()
-                self.last_obstacle.add(Cactus(self.gamespeed, 40, 40))
+                randomvalor = random.randrange(0, 50)
+                if randomvalor > 24:
+                    self.last_obstacle.add(Cactus(self.gamespeed, 40, 40))
+                elif randomvalor <= 24:
+                    self.last_obstacle.add(Ptera(self.gamespeed, 46, 40))
             else:
                 for last_obstacle in self.last_obstacle:
                     if (
                         last_obstacle.rect.right < WIDTH * 0.7
-                        and random.randrange(0, 50) == 10
+                        and random.randrange(0, 50) > 24
+                        and last_obstacle.rect.left < WIDTH - MIN_DISTANCE
                     ):
                         self.last_obstacle.empty()
                         self.last_obstacle.add(Cactus(self.gamespeed, 40, 40))
-
-        if (
-            len(self.pteras) == 0
-            and random.randrange(0, 200) == 10
-            and self.counter > 500
-        ):
-            for last_obstacle in self.last_obstacle:
-                if last_obstacle.rect.right < WIDTH * 0.8:
-                    self.last_obstacle.empty()
-                    self.last_obstacle.add(Ptera(self.gamespeed, 46, 40))
+                    elif (
+                        last_obstacle.rect.right < WIDTH * 0.7
+                        and random.randrange(0, 50) <= 24
+                        and last_obstacle.rect.left < WIDTH - MIN_DISTANCE
+                    ):
+                        self.last_obstacle.empty()
+                        self.last_obstacle.add(Ptera(self.gamespeed, 46, 40))
 
         if len(self.clouds) < 5 and random.randrange(0, 300) == 10:
-            Cloud(WIDTH, random.randrange(HEIGHT / 5, HEIGHT / 2))
+            Cloud(WIDTH, random.randrange(HEIGHT // 5, HEIGHT // 2))
 
         for player in self.alive_players:
             player.update()
@@ -146,6 +154,11 @@ class MultiDinoGame:
         if len(self.alive_players) == 0:
             self.last_dead_player.draw()
 
+        gamespeed_text = self.font.render(
+            f"Game Speed: {self.gamespeed}", True, (0, 0, 0)
+        )
+        self.screen.blit(gamespeed_text, (10, 10))
+
         pygame.display.update()
         self.clock.tick(self.fps)
 
@@ -155,7 +168,7 @@ class MultiDinoGame:
             if max_score > self.high_score:
                 self.high_score = max_score
 
-        if self.counter % 700 == 699:
+        if self.counter % 700 == 699 and self.gamespeed < self.max_game_speed:
             self.new_ground.speed -= 1
             self.gamespeed += 1
 
@@ -163,50 +176,56 @@ class MultiDinoGame:
 
     def get_state(self):
         """
-        There can be up to 02 Cacti and 01 Ptera at the screen at a time.
-        Each cactus/ptera sprite is represented as a tuple (X, Y, H).
+        This function returns a list of states with 10 values for each dino:
+        [[DY, X1, Y1, H1, W1, X2, Y2, H2, W2, GS]]
 
-        This function returns a list of states with 11 values for each dino:
-        [[DY, X1, Y1, H1, X2, Y2, H2, X3, Y3, H3, GS]]
-
-
-        X: is the distance of a Cactus or Ptero from the dinossaur in the X axis;
-        Y: is the position of a Cactus or Ptero in screen for the Y axis; and
-        H: is the height of the sprite.
-
-        DY is the position of the dinossaur in the Y axis (the only difference
-        between each dinossaur).
-
-        GS is the Game Speed.
-
-        The nearest object is in X1, Y1, H1. The farthest is X3, Y3, H3.
+        DY: Distance in Y of the dinosaur.
+        X1, Y1: Distance in X and Y from the first closest obstacle.
+        H1: Height of the first closest obstacle.
+        X2, Y2: Distance in X and Y from the second closest obstacle.
+        H2: Height of the second closest obstacle.
+        GS: Game speed.
         """
 
         def _get_state(dino_number):
             w = self.screen.get_width()
             h = self.screen.get_height()
 
-            def get_coords(sprites, min_size):
-                cs = []
+            def get_coords(sprites, max_obstacles):
+                coords = []
                 for sprite in sprites:
                     X_distance_from_dino = (
                         sprite.rect.centerx
                         - self.player_dinos[dino_number].rect.centerx
                     ) / w
-                    Y_position_in_screen = sprite.rect.centery / h
+                    Y_distance_from_dino = (
+                        sprite.rect.centery
+                        - self.player_dinos[dino_number].rect.centery
+                    ) / h
                     Height = sprite.rect.height / h
-                    if (
-                        sprite.rect.centerx
-                        > self.player_dinos[dino_number].rect.centerx
-                    ):
-                        cs += [(X_distance_from_dino, Y_position_in_screen, Height)]
-                return cs + [(1, 0, 0)] * (min_size - len(cs))
+                    Width = sprite.rect.width / w
+                    # Consider only obstacles that are in front of the dino
+                    if X_distance_from_dino > 0:
+                        coords.append(
+                            (X_distance_from_dino, Y_distance_from_dino, Height, Width)
+                        )
 
-            coords = get_coords(self.cacti, 2) + get_coords(self.pteras, 1)
-            ordered_coords = sorted(coords, key=lambda x: x[0])
+                # Return at most max_obstacles, padding if necessary
+                coords = sorted(coords, key=lambda x: x[0])[:max_obstacles]
+                return coords + [(1, 0, 0, 0)] * (
+                    max_obstacles - len(coords)
+                )  # Pad with dummy values if less obstacles
+
+            # Get the closest two obstacles (cacti and pteras combined)
+            obstacles = get_coords(self.cacti, 2) + get_coords(self.pteras, 2)
+            ordered_coords = sorted(obstacles, key=lambda x: x[0])[
+                :2
+            ]  # Take the closest two obstacles
+
+            # Flatten the obstacle coordinates
             state = (
                 [self.player_dinos[dino_number].rect.centery / h]
-                + [c for cs in ordered_coords for c in cs]
+                + [c for obstacle in ordered_coords for c in obstacle]
                 + [self.gamespeed / w]
             )
             return state
