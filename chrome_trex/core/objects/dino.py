@@ -21,7 +21,7 @@ class Dino:
         self.image = self.running_dino_images[0]
         self.index = 0
         self.counter = 0
-        self.score = 0
+        self.score: int = 0
         self.is_jumping = False
         self.is_dead = False
         self.is_ducking = False
