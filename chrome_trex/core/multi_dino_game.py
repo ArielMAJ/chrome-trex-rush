@@ -1,5 +1,6 @@
 import itertools
 import random
+from typing import List, Literal
 
 import pygame
 from chrome_trex.constants import (  # noqa: F401
@@ -21,7 +22,22 @@ from chrome_trex.helpers import load_sprite_sheet
 
 
 class MultiDinoGame:
-    def __init__(self, dino_count, fps=60, max_game_speed=12):
+    """
+    A class to manage a multi-player game of T-Rex Rush with multiple dinosaurs.
+    """
+
+    def __init__(self, dino_count: int, fps: int = 60, max_game_speed: int = 12):
+        """
+        Initialize the game with a given number of dinosaurs, FPS, and maximum game
+          speed.
+
+        Set fps to zero so the game goes at the maximum fps possible.
+
+        Args:
+            dino_count (int): Number of dinosaur players in the game.
+            fps (int, optional): Frames per second for the game. Defaults to 60.
+            max_game_speed (int, optional): Maximum game speed. Defaults to 12.
+        """
         self.high_score = 0
         self.fps = fps
         self.obstacles = []
@@ -34,7 +50,11 @@ class MultiDinoGame:
         self.max_game_speed = max_game_speed
         self.reset()
 
-    def reset(self):
+    def reset(self) -> None:
+        """
+        Reset the game state, including resetting the game speed, creating a new ground,
+        re-initializing the scoreboard, and spawning new dinosaurs and obstacles.
+        """
         self.gamespeed = 4
         self.game_over = False
         self.obstacles = []
@@ -67,18 +87,28 @@ class MultiDinoGame:
         self.HI_rect.top = HEIGHT * 0.1
         self.HI_rect.left = WIDTH * 0.73
 
-        # Update the screen
+        # Update the screen with the initial state
         self.step([ACTION_FORWARD for _ in range(self.dino_count)])
 
     def get_image(self):
         return pygame.surfarray.array3d(self.screen)
 
-    def step(self, actions):
+    def step(self, actions: List[Literal[0, 1, 2]]):
+        """
+        Execute a single game step, updating the game state based on the given actions
+          for each dinosaur.
+        Calling this method can be understood as "advancing the game by a single frame".
+
+        Args:
+            actions (list): A list of actions for each dinosaur
+                (e.g., ACTION_FORWARD, ACTION_UP, ACTION_DOWN = 0, 1, 2).
+        """
         if pygame.display.get_surface() is None:
             print("Couldn't load display surface")
             self.game_over = True
             return
 
+        # Update the player dinos based on their actions
         for player, action in zip(self.player_dinos, actions):
             if player.is_dead:
                 continue
@@ -91,6 +121,7 @@ class MultiDinoGame:
                 if not (player.is_jumping and player.is_dead):
                     player.is_ducking = True
 
+        # Update obstacle movement and collision detection
         for sprite in itertools.chain(self.cacti, self.pteras):
             sprite.movement[0] = -self.gamespeed
             for player in self.alive_players[:]:
@@ -99,16 +130,17 @@ class MultiDinoGame:
                     self.alive_players.remove(player)
                     self.last_dead_player = player
 
+        # Manage obstacle spawning
         obstaculos = len(self.cacti) + len(self.pteras)
-
         MIN_DISTANCE = 200 * self.gamespeed
+
         if obstaculos < 3:
             if obstaculos == 0:
                 self.last_obstacle.empty()
                 randomvalor = random.randrange(0, 50)
                 if randomvalor > 24:
                     self.last_obstacle.add(Cactus(self.gamespeed, 40, 40))
-                elif randomvalor <= 24:
+                else:
                     self.last_obstacle.add(Ptera(self.gamespeed, 46, 40))
             else:
                 for last_obstacle in self.last_obstacle:
@@ -127,9 +159,11 @@ class MultiDinoGame:
                         self.last_obstacle.empty()
                         self.last_obstacle.add(Ptera(self.gamespeed, 46, 40))
 
+        # Add clouds to the screen
         if len(self.clouds) < 5 and random.randrange(0, 300) == 10:
             Cloud(WIDTH, random.randrange(HEIGHT // 5, HEIGHT // 2))
 
+        # Update the positions of the game elements
         for player in self.alive_players:
             player.update()
         self.cacti.update()
@@ -139,6 +173,7 @@ class MultiDinoGame:
         self.scb.update(max(self.get_scores()))
         self.highsc.update(self.high_score)
 
+        # Redraw the game elements on the screen
         self.screen.fill(BACKGROUND_COL)
         self.new_ground.draw()
         self.clouds.draw(self.screen)
@@ -154,37 +189,45 @@ class MultiDinoGame:
         if len(self.alive_players) == 0:
             self.last_dead_player.draw()
 
+        # Display the current game speed
         gamespeed_text = self.font.render(
             f"Game Speed: {self.gamespeed}", True, (0, 0, 0)
         )
         self.screen.blit(gamespeed_text, (10, 10))
 
+        # Update the screen and FPS
         pygame.display.update()
         self.clock.tick(self.fps)
 
+        # End the game if all dinosaurs are dead
         if len(self.alive_players) == 0:
             self.game_over = True
             max_score = max(self.get_scores())
             if max_score > self.high_score:
                 self.high_score = max_score
 
+        # Increase game speed every 700 frames
         if self.counter % 700 == 699 and self.gamespeed < self.max_game_speed:
             self.new_ground.speed -= 1
             self.gamespeed += 1
 
         self.counter = self.counter + 1
 
-    def get_state(self):
+    def get_state(self) -> List[List[float]]:
         """
-        This function returns a list of states with 10 values for each dino:
-        [[DY, X1, Y1, H1, W1, X2, Y2, H2, W2, GS]]
+        Get the current state of the game for each dinosaur.
 
-        DY: Distance in Y of the dinosaur.
-        X1, Y1: Distance in X and Y from the first closest obstacle.
-        H1: Height of the first closest obstacle.
-        X2, Y2: Distance in X and Y from the second closest obstacle.
-        H2: Height of the second closest obstacle.
-        GS: Game speed.
+        The state consists of 10 values for each dinosaur:
+            [[DY, X1, Y1, H1, W1, X2, Y2, H2, W2, GS], ...]
+            DY: Distance in Y of the dinosaur.
+            X1, Y1: Distance in X and Y from the first closest obstacle.
+            H1: Height of the first closest obstacle.
+            X2, Y2: Distance in X and Y from the second closest obstacle.
+            H2: Height of the second closest obstacle.
+            GS: Game speed.
+
+        Returns:
+            list: A list of state vectors, one for each dinosaur.
         """
 
         def _get_state(dino_number):
@@ -232,8 +275,17 @@ class MultiDinoGame:
 
         return [_get_state(dino_number) for dino_number in range(self.dino_count)]
 
-    def get_scores(self):
+    def get_scores(self) -> List[int]:
+        """
+        Get the scores of all player dinosaurs.
+
+        Returns:
+            list: A list of scores for each dinosaur.
+        """
         return [player.score for player in self.player_dinos]
 
-    def close(self):
+    def close(self) -> None:
+        """
+        Safely close the game, stopping the Pygame engine.
+        """
         pygame.quit()
